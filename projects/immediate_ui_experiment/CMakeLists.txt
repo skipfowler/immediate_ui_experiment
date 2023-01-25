@@ -7,6 +7,20 @@ project(
 add_executable(
   ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
   "main.cpp"
+  "DemoEventListener.cpp"
+  "DemoEventListener.h"
+  "DemoEventListenerInstancer.cpp"
+  "DemoEventListenerInstancer.h"
+  "DemoWindow.cpp"
+  "DemoWindow.h"
+  "PlatformExtensions.cpp"
+  "PlatformExtensions.h"
+  "RendererExtensions.cpp"
+  "RendererExtensions.h"
+  "Shell.cpp"
+  "Shell.h"
+  "ShellFileInterface.cpp"
+  "ShellFileInterface.h"
 )
 
 target_include_directories(
@@ -26,3 +40,10 @@ target_link_libraries(
   CONAN_PKG::rmlui
   CONAN_PKG::spdlog
 )
+
+if(WIN32)
+  target_link_libraries(
+    ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
+    shlwapi.lib
+  )
+endif()
