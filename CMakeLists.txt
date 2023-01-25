@@ -55,8 +55,17 @@ endforeach()
 include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
 conan_basic_setup(TARGETS)
 
+set(PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME "immediate_ui_experiment")
+
 # Add  projects
 add_subdirectory(projects)
 
 # Finalize solution
 include(${GLAMOUR_PATH}/solution_conclusion.cmake)
+
+### Move to glamour
+set_property(
+  DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} 
+  PROPERTY VS_STARTUP_PROJECT 
+  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
+)
