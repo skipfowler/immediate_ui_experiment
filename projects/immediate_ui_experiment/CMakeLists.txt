@@ -1,0 +1,21 @@
+set(PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME "immediate_ui_experiment")
+
+project(
+  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
+  VERSION ${SOLUTION_VERSION}
+  LANGUAGES CXX
+)
+
+add_executable(
+  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
+  "main.cpp"
+)
+
+target_link_libraries(
+  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
+  CONAN_PKG::fmt
+  CONAN_PKG::glad
+  CONAN_PKG::glfw
+  CONAN_PKG::imgui
+  CONAN_PKG::spdlog
+)
