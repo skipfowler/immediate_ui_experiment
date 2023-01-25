@@ -39,9 +39,18 @@ conan_cmake_configure(
   REQUIRES glad/0.1.36
   REQUIRES glfw/3.3.8
   REQUIRES imgui/cci.20220621+1.88.docking
+  REQUIRES rmlui/5.0
   REQUIRES spdlog/1.11.0
 
   GENERATORS cmake_multi
+
+  IMPORTS "res/bindings, *glfw*.* -> ${CMAKE_SOURCE_DIR}/projects/imgui_bindings"
+  IMPORTS "res/bindings, *opengl*.* -> ${CMAKE_SOURCE_DIR}/projects/imgui_bindings"
+  IMPORTS "res/Backends, RmlUi_Backend.h -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
+  IMPORTS "res/Backends, *Backend_GLFW*.* -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
+  IMPORTS "res/Backends, RmlUi_Include_GL3.h -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
+  IMPORTS "res/Backends, *Platform_GLFW*.* -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
+  IMPORTS "res/Backends, *Renderer_GL*.* -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
 )
 
 foreach(TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -55,7 +64,13 @@ endforeach()
 include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
 conan_basic_setup(TARGETS)
 
+set(PROJECTS_IMGUI_BINDINGS_TARGET_NAME "imgui_bindings")
+set(PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/projects/imgui_bindings")
+
 set(PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME "immediate_ui_experiment")
+
+set(PROJECTS_RMLUI_BACKENDS_TARGET_NAME "rmlui_backends")
+set(PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/projects/rmlui_backends")
 
 # Add  projects
 add_subdirectory(projects)
