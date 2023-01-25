@@ -27,6 +27,10 @@ include(${GLAMOUR_PATH}/solution_postamble.cmake)
 
 ### Move to glamour
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
+set(GLAMOUR_BINARY_DIR "${CMAKE_BINARY_DIR}/.glamour")
+set(GLAMOUR_BINARY_INCLUDE_DIRECTORY "${GLAMOUR_BINARY_DIR}/include")
+set(PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES "${GLAMOUR_BINARY_INCLUDE_DIRECTORY}/imgui")
+set(PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES "${GLAMOUR_BINARY_INCLUDE_DIRECTORY}/rmlui")
 
 # Configure Conan for now
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
@@ -44,13 +48,13 @@ conan_cmake_configure(
 
   GENERATORS cmake_multi
 
-  IMPORTS "res/bindings, *glfw*.* -> ${CMAKE_SOURCE_DIR}/projects/imgui_bindings"
-  IMPORTS "res/bindings, *opengl*.* -> ${CMAKE_SOURCE_DIR}/projects/imgui_bindings"
-  IMPORTS "res/Backends, RmlUi_Backend.h -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
-  IMPORTS "res/Backends, *Backend_GLFW*.* -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
-  IMPORTS "res/Backends, RmlUi_Include_GL3.h -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
-  IMPORTS "res/Backends, *Platform_GLFW*.* -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
-  IMPORTS "res/Backends, *Renderer_GL*.* -> ${CMAKE_SOURCE_DIR}/projects/rmlui_backends"
+  IMPORTS "res/bindings, *glfw*.* -> ${PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES}"
+  IMPORTS "res/bindings, *opengl*.* -> ${PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES}"
+  IMPORTS "res/Backends, RmlUi_Backend.h -> ${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}"
+  IMPORTS "res/Backends, *Backend_GLFW*.* -> ${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}"
+  IMPORTS "res/Backends, RmlUi_Include_GL3.h -> ${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}"
+  IMPORTS "res/Backends, *Platform_GLFW*.* -> ${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}"
+  IMPORTS "res/Backends, *Renderer_GL*.* -> ${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}"
 )
 
 foreach(TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -65,12 +69,9 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
 conan_basic_setup(TARGETS)
 
 set(PROJECTS_IMGUI_BINDINGS_TARGET_NAME "imgui_bindings")
-set(PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/projects/imgui_bindings")
-
 set(PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME "immediate_ui_experiment")
-
 set(PROJECTS_RMLUI_BACKENDS_TARGET_NAME "rmlui_backends")
-set(PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/projects/rmlui_backends")
+
 
 # Add  projects
 add_subdirectory(projects)

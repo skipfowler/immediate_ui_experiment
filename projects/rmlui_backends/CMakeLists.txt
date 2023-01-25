@@ -6,13 +6,13 @@ project(
 
 add_library(
   ${PROJECTS_RMLUI_BACKENDS_TARGET_NAME} STATIC
-  "RmlUi_Backend.h"
-  "RmlUi_Backend_GLFW_GL3.cpp"
-  "RmlUi_Include_GL3.h"
-  "RmlUi_Platform_GLFW.cpp"
-  "RmlUi_Platform_GLFW.h"
-  "RmlUi_Renderer_GL3.cpp"
-  "RmlUi_Renderer_GL3.h"
+  "${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}/RmlUi_Backend.h"
+  "${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}/RmlUi_Backend_GLFW_GL3.cpp"
+  "${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}/RmlUi_Include_GL3.h"
+  "${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}/RmlUi_Platform_GLFW.cpp"
+  "${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}/RmlUi_Platform_GLFW.h"
+  "${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}/RmlUi_Renderer_GL3.cpp"
+  "${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}/RmlUi_Renderer_GL3.h"
 )
 
 target_link_libraries(

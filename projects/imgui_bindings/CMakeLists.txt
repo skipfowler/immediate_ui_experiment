@@ -6,11 +6,11 @@ project(
 
 add_library(
   ${PROJECTS_IMGUI_BINDINGS_TARGET_NAME} STATIC
-  "imgui_impl_glfw.cpp"
-  "imgui_impl_glfw.h"
-  "imgui_impl_opengl3.cpp"
-  "imgui_impl_opengl3.h"
-  "imgui_impl_opengl3_loader.h"
+  "${PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES}/imgui_impl_glfw.cpp"
+  "${PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES}/imgui_impl_glfw.h"
+  "${PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES}/imgui_impl_opengl3.cpp"
+  "${PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES}/imgui_impl_opengl3.h"
+  "${PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES}/imgui_impl_opengl3_loader.h"
 )
 
 target_link_libraries(
