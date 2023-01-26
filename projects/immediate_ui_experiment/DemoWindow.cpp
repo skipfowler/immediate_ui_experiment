@@ -27,7 +27,7 @@ scrollbarhorizontal sliderbar:active { background: #666; }
 
 DemoWindow::DemoWindow(const Rml::String &title, Rml::Context *context) {
   using namespace Rml;
-  document = context->LoadDocument("basic/demo/data/demo.rml");
+  document = context->LoadDocument("assets/demo.rml");
   if (document) {
     document->GetElementById("title")->SetInnerRML(title);
 

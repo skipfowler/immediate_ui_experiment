@@ -35,20 +35,17 @@ int main(int argc, char** argv) {
   Rml::SetSystemInterface(backend->GetSystemInterface());
   Rml::SetRenderInterface(backend->GetRenderInterface());
 
-  Rml::SharedPtr<RmlUi::Backend::DataGlfwGL3> data_backend =
-      Rml::MakeShared<RmlUi::Backend::DataGlfwGL3>();
-
   Rml::Initialise();
-  Rml::Debugger::Initialise(data_backend->context);
-
-  auto demo_window =
-      Rml::MakeShared<DemoWindow>("Demo sample", data_backend->context);
+  Rml::Debugger::Initialise(backend->CreateContext());
 
   DemoEventListenerInstancer event_listener_instancer;
   event_listener_instancer.SetBackend(backend);
-  event_listener_instancer.SetWindow(demo_window);
   Rml::Factory::RegisterEventListenerInstancer(&event_listener_instancer);
 
+  auto demo_window =
+      Rml::MakeShared<DemoWindow>("Demo sample", backend->CreateContext());
+
+  event_listener_instancer.SetWindow(demo_window);
   Shell::LoadFonts();
 
   demo_window->SetBackend(backend);
@@ -62,14 +59,14 @@ int main(int argc, char** argv) {
   bool running = true;
 
   while (running) {
-    running = backend->ProcessEvents(data_backend->context,
+    running = backend->ProcessEvents(backend->CreateContext(),
                                      &Shell::ProcessKeyDownShortcuts);
 
     demo_window->Update();
-    data_backend->context->Update();
+    backend->CreateContext()->Update();
 
     backend->BeginFrame();
-    data_backend->context->Render();
+    backend->CreateContext()->Render();
     backend->PresentFrame();
   }
 
@@ -77,7 +74,7 @@ int main(int argc, char** argv) {
   Rml::Shutdown();
   backend->Shutdown();
   Shell::Shutdown();
-  demo_window.reset();
+  glfwTerminate();
 }
 
 //  // Setup window

@@ -14,13 +14,14 @@ class glfwGL3 : BackendInterface {
  public:
   bool Initialize(const char* name, int width, int height, bool allow_resize);
   void Shutdown();
+  Rml::Context* CreateContext();
   Rml::SystemInterface* GetSystemInterface();
   Rml::RenderInterface* GetRenderInterface();
   bool ProcessEvents(Rml::Context* context, KeyDownCallback key_down_callback);
   void RequestExit();
   void BeginFrame();
   void PresentFrame();
-  void SetBackend(Rml::SharedPtr<DataGlfwGL3> backend);
+  Rml::SharedPtr<DataGlfwGL3> GetBackend();
 
  private:
   void SetupCallbacks(GLFWwindow* window);
