@@ -4,6 +4,7 @@ include(${CMAKE_SOURCE_DIR}/.glamour/glamour.cmake)
 include(${GLAMOUR_PATH}/solution_preamble.cmake)
 
 ### Move to glamour
+set(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CXX_STANDARD 23)
 set(SOLUTION_NAME "immediate_ui_experiment")
 set(SOLUTION_VERSION "1.0.0")
@@ -28,6 +29,13 @@ include(${GLAMOUR_PATH}/solution_postamble.cmake)
 ### Move to glamour
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
+# Subsystem linker options
+if (WIN32)
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /subsystem:windows /ENTRY:mainCRTStartup")
+else()
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
+endif()
+
 # Configure Conan for now
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
@@ -35,11 +43,12 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
 conan_cmake_configure(
+  REQUIRES entt/3.11.1
   REQUIRES fmt/9.1.0
   REQUIRES glad/0.1.36
   REQUIRES glfw/3.3.8
-  REQUIRES imgui/cci.20220621+1.88.docking
-  REQUIRES rmlui/5.0
+  REQUIRES imgui/cci.20230123+1.89.2.docking
+  REQUIRES libgit2/1.5.0
   REQUIRES spdlog/1.11.0
 
   GENERATORS cmake_multi
@@ -58,9 +67,10 @@ conan_basic_setup(TARGETS)
 
 set(PROJECTS_IMGUI_BINDINGS_TARGET_NAME "imgui_bindings")
 set(PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME "immediate_ui_experiment")
-set(PROJECTS_RMLUI_BACKENDS_TARGET_NAME "rmlui_backends")
+set(PROJECTS_AZURE_DEVOPS_EXPERIMENT_TARGET_NAME "azure_devops_experiment")
+set(PROJECTS_IMMEDIATE_UI_EXPERIMENT_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/projects/immediate_ui_experiment")
 set(PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/projects/imgui_bindings")
-set(PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/projects/rmlui_backends")
+set(PROJECTS_AZURE_DEVOPS_EXPERIMENT_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/projects/azure_devops_experiment")
 
 # Add  projects
 add_subdirectory(projects)

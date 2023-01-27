@@ -4,46 +4,44 @@ project(
   LANGUAGES CXX
 )
 
+file(
+  GLOB_RECURSE PROJECTS_IMMEDIATE_UI_EXPERIMENT_FILES 
+  LIST_DIRECTORIES false
+  RELATIVE ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_INCLUDE_DIRECTORIES}
+  CONFIGURE_DEPENDS
+  *.cpp *.h */*.cpp */*.h
+)
+
 add_executable(
   ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
-  "main.cpp"
-  "DemoEventListener.cpp"
-  "DemoEventListener.h"
-  "DemoEventListenerInstancer.cpp"
-  "DemoEventListenerInstancer.h"
-  "DemoWindow.cpp"
-  "DemoWindow.h"
-  "PlatformExtensions.cpp"
-  "PlatformExtensions.h"
-  "RendererExtensions.cpp"
-  "RendererExtensions.h"
-  "Shell.cpp"
-  "Shell.h"
-  "ShellFileInterface.cpp"
-  "ShellFileInterface.h"
+  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_FILES}
 )
 
 target_include_directories(
   ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME} PRIVATE
+  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_INCLUDE_DIRECTORIES}
   ${PROJECTS_IMGUI_BINDINGS_INCLUDE_DIRECTORIES}
-  ${PROJECTS_RMLUI_BACKENDS_INCLUDE_DIRECTORIES}
 )
 
 target_link_libraries(
-  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
+  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME} PRIVATE
   ${PROJECTS_IMGUI_BINDINGS_TARGET_NAME}
-  ${PROJECTS_RMLUI_BACKENDS_TARGET_NAME}
+  CONAN_PKG::entt
   CONAN_PKG::fmt
   CONAN_PKG::glad
   CONAN_PKG::glfw
   CONAN_PKG::imgui
-  CONAN_PKG::rmlui
+  CONAN_PKG::libgit2
   CONAN_PKG::spdlog
 )
 
-if(WIN32)
-  target_link_libraries(
-    ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME}
-    shlwapi.lib
-  )
-endif()
+source_group(
+  TREE ${CMAKE_CURRENT_LIST_DIR} 
+  FILES ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_FILES}
+)
+
+set_target_properties(
+  ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME} PROPERTIES
+  FOLDER "projects"
+  VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}
+)
