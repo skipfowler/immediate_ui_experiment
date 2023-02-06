@@ -26,13 +26,15 @@ target_include_directories(
 target_link_libraries(
   ${PROJECTS_IMMEDIATE_UI_EXPERIMENT_TARGET_NAME} PRIVATE
   ${PROJECTS_IMGUI_BINDINGS_TARGET_NAME}
-  CONAN_PKG::entt
-  CONAN_PKG::fmt
-  CONAN_PKG::glad
-  CONAN_PKG::glfw
-  CONAN_PKG::imgui
-  CONAN_PKG::libgit2
-  CONAN_PKG::spdlog
+  EnTT::EnTT
+  fmt::fmt
+  glad::glad
+  glfw
+  imgui::imgui
+  libgit2::libgit2
+  nanobench::nanobench
+  rapidjson
+  spdlog::spdlog
 )
 
 source_group(

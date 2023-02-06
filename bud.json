@@ -1,0 +1,116 @@
+{
+  "dependencies": {
+    "conan": {
+      "generators": [
+        "CMakeDeps"
+      ],
+      "imports": [
+      ],
+      "options": [
+      ],
+      "requires": [
+        "entt/3.11.1",
+        "fmt/9.1.0",
+        "glad/0.1.36",
+        "glfw/3.3.8",
+        "imgui/cci.20230123+1.89.2.docking",
+        "libgit2/1.5.0",
+        "nanobench/4.3.9",
+        "rapidjson/cci.20220822",
+        "spdlog/1.11.0"
+      ]
+    },
+    "git": [
+    ]
+  },
+  "solution": {
+    "build_types": [
+      "Debug",
+      "Release"
+    ],
+    "find_packages": [
+      "entt",
+      "fmt",
+      "glad",
+      "glfw3",
+      "imgui",
+      "libgit2",
+      "nanobench",
+      "rapidjson",
+      "spdlog"
+    ],
+    "name": "immediate_ui_experiment",
+    "startup": "IMModeUITest::ImModeExe",
+    "version": "1.0.0"
+  },
+  "targets": [
+    {
+      "alias": "IMModeUITest::ImGuiBindings",
+      "compile": [
+        "imgui_impl_glfw.cpp",
+        "imgui_impl_glfw.h",
+        "imgui_impl_opengl3.cpp",
+        "imgui_impl_opengl3.h",
+        "imgui_impl_opengl3_loader.h"
+      ],
+      "cppstd": 23,
+      "include": [
+        "projects/imgui_bindings"
+      ],
+      "directory": "projects/imgui_bindings",
+      "filter": "projects",
+      "link": {
+        "glfw"
+      },
+      "name": "imgui_bindings",
+      "properties": {
+        "link": "static",
+        "type": "library"
+      },
+      "version": "1.0.0"
+    },
+    {
+      "alias": "IMModeUITest::ImModeExe",
+      "compile": [
+        "git_wrapper.cpp",
+        "git_wrapper.h",
+        "Components/application_error.h",
+        "Components/application_status.h",
+        "Entities/application.cpp",
+        "Entities/application.h",
+        "Entities/git.cpp",
+        "Entities/git.h",
+        "Tag/application_tag.h"
+      ],
+      "cppstd": 23,
+      "directory": "projects/immediate_ui_experiment",
+      "include": [
+        "projects/immediate_ui_experiment",
+        "projects/imgui_bindings"
+      ],
+      "filter": "projects",
+      "link": {
+        "alias": [
+          "IMModeUITest::ImGuiBindings"
+        ],
+        "conan": [
+          "entt",
+          "fmt",
+          "glad",
+          "glfw",
+          "imgui",
+          "libgit2",
+          "rapidjson",
+          "spdlog"
+        ]
+      },
+      "name": "immediate_ui_experiment",
+      "properties": {
+        "has_console": false,
+        "type": "executable",
+        "use_windows_entry_point": "no"
+      },
+      "version": "1.0.0"
+    }
+  ]
+}

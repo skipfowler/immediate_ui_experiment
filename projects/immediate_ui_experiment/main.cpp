@@ -1,166 +1,338 @@
-﻿#include <fmt/core.h>
+﻿#include <file_listing_enumerator.h>
+#include <fmt/core.h>
+#include <git_wrapper.h>
+#include <rapidjson/document.h>
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
 #include <spdlog/async.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
-#include <entt/entt.hpp>
+// #include <entt/entt.hpp>
+#include <fstream>
 
-#include "Components/application_error.h"
-#include "Entities/application.h"
-#include "Tags/application_tag.h"
-#include "git_wrapper.h"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#define GL_SILENCE_DEPRECATION
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <GLES2/gl2.h>
-#endif
-#include <GLFW/glfw3.h>  // Will drag system OpenGL headers
-
-static void glfw_error_callback(int error, const char* description) {
-  spdlog::error("Glfw Error {}: {}", error, description);
-}
+// #include "Components/application_error.h"
+// #include "Entities/application.h"
+// #include "Tags/application_tag.h"
+#include "crude.h"
+// #include "imgui.h"
+// #include "imgui_impl_glfw.h"
+// #include "imgui_impl_opengl3.h"
+// #define GL_SILENCE_DEPRECATION
+// #if defined(IMGUI_IMPL_OPENGL_ES2)
+// #include <GLES2/gl2.h>
+// #endif
+// #include <GLFW/glfw3.h>  // Will drag system OpenGL headers
+//
+// static void glfw_error_callback(int error, const char* description) {
+//   spdlog::error("Glfw Error {}: {}", error, description);
+// }
 
 auto main(int argc, char** argv) -> int {
   auto async_file_logger = spdlog::basic_logger_mt<spdlog::async_factory>(
       "async_file_logger", "logs/log.txt", true);
   spdlog::set_default_logger(async_file_logger);
 
-  auto registry = std::make_shared<entt::registry>();
-  Entities::Application application(registry);
+  std::ifstream ifs("bud.json");
+  rapidjson::IStreamWrapper isw(ifs);
 
-  Wrapper::Git git_wrapper;
+  rapidjson::Document d;
+  d.ParseStream(isw);
 
-  git_wrapper.ErrorCallback([&](const int error_code, const char* description) {
-    auto view = registry->view<Tags::ApplicationTag>();
+  // Generate conanfile.txt
+  auto& conan_node = d["dependencies"]["conan"];
 
-    for (auto [entity] : view.each()) {
-      auto& error = registry->emplace<Components::ApplicationError>(entity);
-      error.description = description;
-      error.error_code = error_code;
-    }
-  });
+  ABCDE::Crude crude;
+  crude.AddGenerators(conan_node["generators"].GetArray());
+  crude.AddImports(conan_node["imports"].GetArray());
+  crude.AddOptions(conan_node["options"].GetArray());
+  crude.AddRequirements(conan_node["requires"].GetArray());
 
-  auto repo_root_path = git_wrapper.Root(".");
-  spdlog::info("Repository root path: {}", repo_root_path);
+  crude.WriteConanfile(".");
 
-  const char* kWindowTitle = "burst";
-  constexpr int kWidthStart = 1280;
-  constexpr int kHeightStart = 780;
+  ABCDE::Crude crude2;
+  crude2.ReadConanfile("./conanfile.txt");
+  auto& other_node = crude2.ToJson(d);
 
-  // Setup window
-  glfwSetErrorCallback(glfw_error_callback);
-  if (!glfwInit()) return 1;
-
-    // Decide GL+GLSL versions
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-  // GL ES 2.0 + GLSL 100
-  const char* glsl_version = "#version 100";
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-#elif defined(__APPLE__)
-  // GL 3.2 + GLSL 150
-  const char* glsl_version = "#version 150";
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
-#else
-  // GL 3.0 + GLSL 130
-  const char* glsl_version = "#version 130";
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-  // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+
-  // only glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // 3.0+ only
-#endif
-
-  // Create window with graphics context
-  GLFWwindow* window = glfwCreateWindow(
-      1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
-  if (window == NULL) return 1;
-  glfwMakeContextCurrent(window);
-  glfwSwapInterval(1);  // Enable vsync
-
-  // Setup Dear ImGui context
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO();
-  (void)io;
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-  // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad
-  // Controls
-  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    // Enable Docking
-  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // Enable Multi-Viewport
-
-  // Setup Dear ImGui style
-  ImGui::StyleColorsDark();
-  // ImGui::StyleColorsLight();
-
-  // When viewports are enabled we tweak WindowRounding/WindowBg so platform
-  // windows can look identical to regular ones.
-  ImGuiStyle& style = ImGui::GetStyle();
-  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-    style.WindowRounding = 0.0f;
-    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-  }
-
-  // Setup Platform/Renderer backends
-  ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplOpenGL3_Init(glsl_version);
-
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-  // Main loop
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-
-    // Start the Dear ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::Begin("Application Errors");
-
-    auto view = registry->view<Components::ApplicationError>();
-
-    for (auto [entity, app_error] : view.each()) {
-      ImGui::Text("git error %i: %s", app_error.error_code,
-                  app_error.description.c_str());
-    }
-
-    ImGui::End();
-
-    // Rendering
-    ImGui::Render();
-    int display_w, display_h;
-    glfwGetFramebufferSize(window, &display_w, &display_h);
-    glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w,
-                 clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-      GLFWwindow* backup_current_context = glfwGetCurrentContext();
-      ImGui::UpdatePlatformWindows();
-      ImGui::RenderPlatformWindowsDefault();
-      glfwMakeContextCurrent(backup_current_context);
-    }
-
-    glfwSwapBuffers(window);
-  }
-
-  // Cleanup
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
-
-  glfwDestroyWindow(window);
-  glfwTerminate();
+  auto& requirements = crude2.GetRequirements();
+  auto& generators = crude2.GetGenerators();
 }
+//// Get solution
+// std::ofstream cmakelists_txt("CMakeLists.txt");
+// cmakelists_txt << "cmake_minimum_required(VERSION 3.8)" << std::endl;
+// cmakelists_txt << std::endl;
+// cmakelists_txt << "set(GLOBAL PROPERTY USE_FOLDERS ON)" << std::endl;
+// cmakelists_txt << "set(CMAKE_CONFIGURATION_TYPES \"";
+
+// auto& bud_solution = d["solution"];
+
+// auto build_types = bud_solution["build_types"].GetArray();
+// auto number_build_types = build_types.Capacity();
+
+// for (unsigned int build_type_index = 0;
+//      build_type_index + 1 < number_build_types; ++build_type_index) {
+//   cmakelists_txt << fmt::format("{};",
+//                                 build_types[build_type_index].GetString());
+// }
+
+// cmakelists_txt << build_types[number_build_types - 1].GetString() << "\")"
+//                << std::endl;
+// cmakelists_txt << std::endl;
+
+// cmakelists_txt << "project(" << std::endl;
+
+// auto solution_name = bud_solution["name"].GetString();
+// cmakelists_txt << fmt::format("  {}", solution_name) << std::endl;
+
+// auto solution_version = bud_solution["version"].GetString();
+// cmakelists_txt << fmt::format("  VERSION {}", solution_version) << std::endl;
+// cmakelists_txt << "  LANGUAGES CXX" << std::endl;
+// cmakelists_txt << ")" << std::endl;
+// cmakelists_txt << std::endl;
+
+// cmakelists_txt
+//     << "set(GENERATED_CONAN_CMAKE_PATH
+//     ${CMAKE_BINARY_DIR}/.temp/cmake/conan)"
+//     << std::endl;
+// cmakelists_txt
+//     << "list(APPEND CMAKE_MODULE_PATH ${GENERATED_CONAN_CMAKE_PATH})"
+//     << std::endl;
+// cmakelists_txt
+//     << "list(APPEND CMAKE_PREFIX_PATH ${GENERATED_CONAN_CMAKE_PATH})"
+//     << std::endl;
+// cmakelists_txt << std::endl;
+
+// for (auto& find_package : bud_solution["find_packages"].GetArray()) {
+//   cmakelists_txt << fmt::format("find_package({} REQUIRED CONFIG)",
+//                                 find_package.GetString())
+//                  << std::endl;
+// }
+
+// cmakelists_txt << std::endl;
+
+// auto bud_targets = d["targets"].GetArray();
+
+// for (auto& target : bud_targets) {
+//   cmakelists_txt << "add_subdirectory(${CMAKE_SOURCE_DIR}/"
+//                  << target["directory"].GetString() << ")" << std::endl;
+// }
+
+// cmakelists_txt << std::endl;
+
+// cmakelists_txt << "if(WIN32)" << std::endl;
+// cmakelists_txt << "  set_property(" << std::endl;
+// cmakelists_txt << "    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}" << std::endl;
+// cmakelists_txt << "    PROPERTY VS_STARTUP_PROJECT" << std::endl;
+// cmakelists_txt << fmt::format("    {}", bud_solution["startup"].GetString())
+//                << std::endl;
+// cmakelists_txt << "  )" << std::endl;
+// cmakelists_txt << "endif()" << std::endl;
+// cmakelists_txt << std::endl;
+
+// cmakelists_txt.close();
+
+// Wrapper::Git git_wrapper;
+// auto git_root = git_wrapper.Root(".");
+// auto git_root_path = fmt::format("{}{}", git_root, "../build/generated");
+
+// for (auto& target : bud_targets) {
+//   auto target_path =
+//       fmt::format("{}/{}", git_root_path, target["directory"].GetString());
+
+//  std::filesystem::create_directories(target_path);
+
+//  auto target_cmakelists_path =
+//      fmt::format("{}/{}", target_path, "CMakeLists.txt");
+//  std::ofstream project_cmakelists_txt(target_cmakelists_path);
+
+//  project_cmakelists_txt << "cmake_minimum_required(VERSION 3.8)"
+//                         << std::endl;
+//  project_cmakelists_txt << std::endl;
+
+//  auto& properties = target["properties"];
+//  auto project_type = properties["type"].GetString();
+
+//  auto target_name = target["name"].GetString();
+//  std::string kSpacing("  ");
+
+//  if (0 == strcmp("library", project_type)) {
+//    const char* project_link = "STATIC";
+
+//    if (properties.HasMember("link")) {
+//      auto project_link = properties["link"].GetString();
+//    }
+
+//    project_cmakelists_txt << "add_library(" << std::endl;
+//    project_cmakelists_txt << "  " << target_name << " " << project_link
+//                           << std::endl;
+//  } else if (0 == strcmp("executable", project_type)) {
+//    if (properties.HasMember("use_windows_entry_point")) {
+//      project_cmakelists_txt << "if(WIN32)";
+//      project_cmakelists_txt << "  add_executable(" << std::endl;
+//      project_cmakelists_txt << "    " << target_name << " WIN32"
+//                             << std::endl;
+//      project_cmakelists_txt << "else()" << std::endl;
+//      project_cmakelists_txt << "  ";
+//    } else {
+//      project_cmakelists_txt << "add_executable(" << std::endl;
+//      project_cmakelists_txt << "  " << target_name;
+//    }
+//  }
+
+//  project_cmakelists_txt << std::endl;
+
+//  for (auto& compile_file : target["compile"].GetArray()) {
+//    project_cmakelists_txt << "  " << compile_file.GetString() << std::endl;
+//  }
+
+//  project_cmakelists_txt << ")" << std::endl;
+//}
+
+//
+//  auto registry = std::make_shared<entt::registry>();
+//  Entities::Application application(registry);
+//
+//  Wrapper::Git git_wrapper;
+//
+//  git_wrapper.ErrorCallback([&](const int error_code, const char*
+//  description)
+//  {
+//    auto view = registry->view<Tags::ApplicationTag>();
+//
+//    for (auto [entity] : view.each()) {
+//      auto& error =
+//      registry->emplace<Components::ApplicationError>(entity);
+//      error.description = description;
+//      error.error_code = error_code;
+//    }
+//  });
+//
+//  auto repo_root_path = git_wrapper.Root(".");
+//  spdlog::info("Repository root path: {}", repo_root_path);
+//
+//  const char* kWindowTitle = "burst";
+//  constexpr int kWidthStart = 1280;
+//  constexpr int kHeightStart = 780;
+//
+//  // Setup window
+//  glfwSetErrorCallback(glfw_error_callback);
+//  if (!glfwInit()) return 1;
+//
+//    // Decide GL+GLSL versions
+// #if defined(IMGUI_IMPL_OPENGL_ES2)
+//  // GL ES 2.0 + GLSL 100
+//  const char* glsl_version = "#version 100";
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+//  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+// #elif defined(__APPLE__)
+//  // GL 3.2 + GLSL 150
+//  const char* glsl_version = "#version 150";
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+//  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+
+//  only glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            //
+//  Required on Mac
+// #else
+//  // GL 3.0 + GLSL 130
+//  const char* glsl_version = "#version 130";
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+//  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+//  // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+//  // 3.2+
+//  // only glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // 3.0+
+//  only
+// #endif
+//
+//  // Create window with graphics context
+//  GLFWwindow* window = glfwCreateWindow(
+//      1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+//  if (window == NULL) return 1;
+//  glfwMakeContextCurrent(window);
+//  glfwSwapInterval(1);  // Enable vsync
+//
+//  // Setup Dear ImGui context
+//  IMGUI_CHECKVERSION();
+//  ImGui::CreateContext();
+//  ImGuiIO& io = ImGui::GetIO();
+//  (void)io;
+//  io.ConfigFlags |=
+//      ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+//  // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable
+//  Gamepad
+//  // Controls
+//  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    // Enable Docking
+//  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // Enable
+//  Multi-Viewport
+//
+//  // Setup Dear ImGui style
+//  ImGui::StyleColorsDark();
+//  // ImGui::StyleColorsLight();
+//
+//  // When viewports are enabled we tweak WindowRounding/WindowBg so
+//  platform
+//  // windows can look identical to regular ones.
+//  ImGuiStyle& style = ImGui::GetStyle();
+//  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+//    style.WindowRounding = 0.0f;
+//    style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+//  }
+//
+//  // Setup Platform/Renderer backends
+//  ImGui_ImplGlfw_InitForOpenGL(window, true);
+//  ImGui_ImplOpenGL3_Init(glsl_version);
+//
+//  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+//
+//  // Main loop
+//  while (!glfwWindowShouldClose(window)) {
+//    glfwPollEvents();
+//
+//    // Start the Dear ImGui frame
+//    ImGui_ImplOpenGL3_NewFrame();
+//    ImGui_ImplGlfw_NewFrame();
+//    ImGui::NewFrame();
+//
+//    ImGui::Begin("Application Errors");
+//
+//    auto view = registry->view<Components::ApplicationError>();
+//
+//    for (auto [entity, app_error] : view.each()) {
+//      ImGui::Text("git error %i: %s", app_error.error_code,
+//                  app_error.description.c_str());
+//    }
+//
+//    ImGui::End();
+//
+//    // Rendering
+//    ImGui::Render();
+//    int display_w, display_h;
+//    glfwGetFramebufferSize(window, &display_w, &display_h);
+//    glViewport(0, 0, display_w, display_h);
+//    glClearColor(clear_color.x * clear_color.w, clear_color.y *
+//    clear_color.w,
+//                 clear_color.z * clear_color.w, clear_color.w);
+//    glClear(GL_COLOR_BUFFER_BIT);
+//    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+//
+//    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+//      GLFWwindow* backup_current_context = glfwGetCurrentContext();
+//      ImGui::UpdatePlatformWindows();
+//      ImGui::RenderPlatformWindowsDefault();
+//      glfwMakeContextCurrent(backup_current_context);
+//    }
+//
+//    glfwSwapBuffers(window);
+//  }
+//
+//  // Cleanup
+//  ImGui_ImplOpenGL3_Shutdown();
+//  ImGui_ImplGlfw_Shutdown();
+//  ImGui::DestroyContext();
+//
+//  glfwDestroyWindow(window);
+//  glfwTerminate();
+//}
 
 // entt::registry registry;
 

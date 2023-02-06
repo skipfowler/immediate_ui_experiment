@@ -19,8 +19,8 @@ add_library(
 
 target_link_libraries(
   ${PROJECTS_IMGUI_BINDINGS_TARGET_NAME}
-  CONAN_PKG::glfw
-  CONAN_PKG::imgui
+  glfw
+  imgui::imgui
 )
 
 source_group(
